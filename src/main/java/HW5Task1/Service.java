@@ -21,11 +21,13 @@ public class Service {
                 SelectedTask = SelectTask();
                 switch (SelectedTask){
                     case 1:{
-                        this.RunTask1(connection);
+                        Car car = this.RunTask1(connection);
+                        System.out.println(car);
                         break;
                     }
                     case 2:{
-                        this.RunTask2(connection);
+                        Engine engine = this.RunTask2(connection);
+                        System.out.println(engine);
                         break;
                     }
                     case 3:{
@@ -54,7 +56,7 @@ public class Service {
         }
     }
     //завантаження драйверу для роботи з БД
-    private void LoadDriver(){
+    void LoadDriver(){
         try {
             Class.forName("org.postgresql.Driver");
             System.out.println("Драйвер підключено.");
@@ -63,7 +65,7 @@ public class Service {
         }
     }
     //встановалюємо підключення
-    private Connection GetConnection(String url, String name, String password){
+    Connection GetConnection(String url, String name, String password){
         //створюємо підключення
         Connection connection = null;
         try {
@@ -79,7 +81,7 @@ public class Service {
     }
     //для зчитування цілих чисел
     //в метод передаємо текст повідомлення, яке буде надруковане користувачу
-    public static int UserInput(String  message) {
+    static int UserInput(String message) {
         Scanner input = new Scanner(System.in);
         boolean redo = true;
         int result = 0;
@@ -133,7 +135,7 @@ public class Service {
         return redo;
     }
     //шукаємо щось по id. Потім отримуємо ResultSet і з нього будуємо об'єкти
-    private ResultSet SearchByID(Connection connection, String query, int id){
+    ResultSet SearchByID(Connection connection, String query, int id){
         ResultSet resultSet = null;
         PreparedStatement preparedStatement;//для параметризованого запиту
         try {
@@ -146,7 +148,7 @@ public class Service {
         return resultSet;
     }
     //для додавання машини в таблицю машин
-    private void InsertCar(Car car, Connection connection){
+    void InsertCar(Car car, Connection connection){
         try {
             //перевірка на наявність запису з таким id, який вже у об'єкта
             car.CarID = IfExists(connection,"SELECT car_id FROM car WHERE car_id = ?",car.CarID);
@@ -216,7 +218,7 @@ public class Service {
         return result;
     }
     //шукаємо автомобіль по id
-    public void RunTask1(Connection connection){
+    public Car RunTask1(Connection connection){
         //наш запит
         String query = "SELECT * FROM car WHERE car_id = ?";
         //запитуємо у користувача ідентифікатор
@@ -224,29 +226,31 @@ public class Service {
         //робимо параметризований пошук
         ResultSet set = this.SearchByID(connection,query,id);
         //технічно, може видати NULL поля. Поки що не знаю, як виправити
+        Car car = new Car();
         try {
             //створюємо машину по отриманому сету
-            Car car = new Car(set);
+            car = new Car(set);
             //робимо запит на параметри двигуна
             query = "SELECT * FROM engine where id = ?";
             set = this.SearchByID(connection,query,car.EngineID);
             //створюємо двигун
             car.Engine = new Engine(set);
-            System.out.println(car.toString());
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return car;
     }
     //шукаємо двигун по id
-    public void RunTask2(Connection connection){
+    public Engine RunTask2(Connection connection){
         //запит
         String query = "SELECT * FROM engine where id = ?";
         //користувач вводить ідентифікатор
         int id = this.UserInput("Вкажіть ідентифікатор двигуна:");
         ResultSet set = this.SearchByID(connection,query,id);
+        Engine engine = new Engine();
         try {
             //створюємо двигун
-            Engine engine = new Engine(set);
+            engine = new Engine(set);
             //змінюємо запит, аби знайти усі машини, які використовуються даний двигун
             query = "SELECT * FROM car WHERE engine_id = ?";
             set = this.SearchByID(connection,query,engine.EngineID);
@@ -256,6 +260,7 @@ public class Service {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return engine;
     }
     //додавання машини до таблиці
     public void RunTask3(Connection connection){
